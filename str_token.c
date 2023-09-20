@@ -1,42 +1,47 @@
 #include "shell.h"
 /**
- * _strtok - separates strings with delimiters
- * @line: It´s pointer to array we receive in getline.
- * @delim: It´s characters we mark off string in parts.
- * Return: A pointer to the created token
-*/
-char *_strtok(char *line, char *delim)
+ * execute - execute a command with its entire path variables.
+ * @data: a pointer to the program's data
+ * Return: If sucess returns zero, otherwise, return -1.
+ */
+int execute(data_of_program *data)
 {
-	int j;
-	static char *str;
-	char *copystr;
+	int retval = 0, status;
+	pid_t pidd;
 
-	if (line != NULL)
-		str = line;
-	for (; *str != '\0'; str++)
-	{
-		for (j = 0; delim[j] != '\0'; j++)
-		{
-			if (*str == delim[j])
-			break;
-		}
-		if (delim[j] == '\0')
-			break;
+	/* check for program in built ins */
+	retval = builtins_list(data);
+	if (retval != -1)/* if program was found in built ins */
+		return (retval);
+
+	/* check for program file system */
+	retval = find_program(data);
+	if (retval)
+	{/* if program not found */
+		return (retval);
 	}
-	copystr = str;
-	if (*copystr == '\0')
-		return (NULL);
-	for (; *str != '\0'; str++)
-	{
-		for (j = 0; delim[j] != '\0'; j++)
-		{
-			if (*str == delim[j])
-			{
-				*str = '\0';
-				str++;
-				return (copystr);
-			}
+	else
+	{/* if program was found */
+		pidd = fork(); /* create a child process */
+		if (pidd == -1)
+		{ /* if the fork call failed */
+			perror(data->command_name);
+			exit(EXIT_FAILURE);
+		}
+		if (pidd == 0)
+		{/* I am the child process, I execute the program*/
+			retval = execve(data->tokens[0], data->tokens, data->env);
+			if (retval == -1) /* if error when execve*/
+				perror(data->command_name), exit(EXIT_FAILURE);
+		}
+		else
+		{/* I am the father, I wait and check the exit status of the child */
+			wait(&status);
+			if (WIFEXITED(status))
+				errno = WEXITSTATUS(status);
+			else if (WIFSIGNALED(status))
+				errno = 128 + WTERMSIG(status);
 		}
 	}
-	return (copystr);
+	return (0);
 }
