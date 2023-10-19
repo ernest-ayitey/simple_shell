@@ -7,40 +7,38 @@
  */
 void tokenize(data_of_program *data)
 {
-    const char *delimiter = " \t";
-    int i, counter = 2;
+	const char *delimiter = " \t";
+	int i, counter = 2;
 
-    // Remove newline character if it exists
-    int length = str_length(data->input_line);
-    if (length > 0 && data->input_line[length - 1] == '\n')
-        data->input_line[length - 1] = '\0';
+	int length = str_length(data->input_line);
 
-    // Count the number of tokens
-    for (i = 0; data->input_line[i]; i++)
-    {
-        for (int j = 0; delimiter[j]; j++)
-        {
-            if (data->input_line[i] == delimiter[j])
-                counter++;
-        }
-    }
+	if (length > 0 && data->input_line[length - 1] == '\n')
+		data->input_line[length - 1] = '\0';
 
-    // Allocate memory for tokens
-    data->tokens = malloc(counter * sizeof(char *));
-    if (data->tokens == NULL)
-    {
-        perror(data->program_name);
-        exit(errno);
-    }
+	for (i = 0; data->input_line[i]; i++)
+	{
+		for (int j = 0; delimiter[j]; j++)
+		{
+			if (data->input_line[i] == delimiter[j])
+				counter++;
+		}
+	}
 
-    // Tokenize the input line
-    i = 0;
-    char *token = _strtok(data->input_line, delimiter);
-    data->command_name = str_duplicate(token);
+	data->tokens = malloc(counter * sizeof(char *));
+	if (data->tokens == NULL)
+	{
+		perror(data->program_name);
+		exit(errno);
+	}
 
-    while (token)
-    {
-        data->tokens[i++] = str_duplicate(token);
-        token = _strtok(NULL, delimiter);
-    }
+	i = 0;
+	char *token = _strtok(data->input_line, delimiter);
+
+	data->command_name = str_duplicate(token);
+
+	while (token)
+	{
+		data->tokens[i++] = str_duplicate(token);
+		token = _strtok(NULL, delimiter);
+	}
 }
